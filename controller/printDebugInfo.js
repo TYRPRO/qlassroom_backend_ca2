@@ -1,4 +1,3 @@
-//Qlassroom Forum
 function printDebugInfo(req, res, next) {
     try{
     console.log();
