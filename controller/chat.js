@@ -2,14 +2,14 @@ const express = require("express");
 const router = express.Router();
 const { Server } = require("socket.io");
 
-var port = "";
-port = process.env.PORT;
+var PORT = process.env.PORT;
 
-const io = new Server(port, {
-	cors: {
-		origin: port,
-	}
-});
+
+const server = express()
+	.listen(PORT, () => console.log(`Listening on ${PORT}`));
+
+const io = new Server({ server });
+
 
 
 io.on("connection", (socket) => {
