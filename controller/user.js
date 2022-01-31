@@ -28,33 +28,275 @@ router.get("/userData", printDebugInfo, verify.extractUserData, function (req, r
 	res.status(200).send({ "Results": "Verified" });
 });
 
+router.post("/checkUserExists", printDebugInfo, function (req, res) {
+	var google_uuid = req.body.google_uuid;
+	user.checkUserExists(google_uuid, function (err, result) {
+		if (err) {
+			if (err.original.code == "22P02") {
+				res.status(400).send({ "error": "Invalid Google UUID" });
+			}
+			else {
+				// res.status(400).send({ "error": "Unexpected Error Occured" });
+				res.status(400).send(err);
+			}
+
+		}
+		else {
+			if (result == null) {
+				res.status(200).send({ "Results": "User doesn't exist." });
+			}
+			else {
+				res.status(200).send(result);
+			}
+
+		}
+	});
+});
+
 //login
 router.post("/api/login", printDebugInfo, function (req, res) {
 
 	var email = req.body.email;
 	var password = req.body.password;
+	if (password == "" || email == "") {
+		return res.status(400).send({ "error": "Email or Password is empty" });
+	}
 
-	user.login(email, password, function (err, token, result) {
-		if (!err) {
-			if (!result) {
-				// this is matched to callback(null, null, null)
-				var message = { "message": "Invalid Credentials" };
 
-				res.status(401).send(message);
+	if (req.body.OAuthId != null) {
+		user.loginOAuth(req.body.OAuthId, email, function (err, token, result) {
+			if (!err) {
+				if (!result) {
+					var message = { "message": "Invalid Credentials" };
+					res.status(401).send(message);
+				}
+				else {
+					var msg = {
+						"token": token,
+					};
+					res.status(200).send(msg);
+				}
+			} else {
+				res.status(500).send({ "message": "Error Authenticating User." });
+			}
+		});
+	}
+	else {
+		user.login(email, password, function (err, token, result) {
+			if (!err) {
+				if (!result) {
+					// this is matched to callback(null, null, null)
+					var message = { "message": "Invalid Credentials" };
+
+					res.status(401).send(message);
+				}
+				else {
+					// this is matched to callback(null, not null)  
+					var msg = {
+						"token": token
+					};
+					res.status(200).send(msg);
+				}
+
+			} else {
+				// this is matched to callaback(not null, null)
+				res.status(500).send({ "message": "Error authenticating user." });
+			}
+
+		});
+	}
+
+});
+
+//adduser
+router.post("/signup", upload.single("image"), printDebugInfo, function (req, res) {
+
+
+	var first_name = req.body.first_name;
+	var last_name = req.body.last_name;
+	var email = req.body.email;
+	var password = req.body.password;
+	var roles = ["forum_user"];
+	var phone_number = req.body.phone_number;
+
+	var school = req.body.school;
+	var date_of_birth = req.body.date_of_birth;
+	var gender = req.body.gender;
+
+	var oAuthAddition = req.body.oAuthAddition;
+	var google_uuid = req.body.google_uuid;
+
+	function submitEdit(profile_pic) {
+		user.addUser(first_name, last_name, email, roles, function (err, result) {
+			if (!err) {
+				if (result == "duplicate") {
+					res.status(422).send({ "message": "User already exists!" });
+				}
+				else {
+					console.log("testing");
+					user.getUserID(email, function (err, result) {
+						var fk_user_id = result.user_id;
+						if (!err) {
+
+							if (oAuthAddition != "True") {
+								user.addPassword(fk_user_id, password, function (err, result) {
+									if (!err) {
+										user.addUserProfile(fk_user_id, profile_pic, school, date_of_birth, gender, function (err, result) {
+											if (!err) {
+												res.status(201).send({ "Result": "Success!" });
+											}
+											else {
+												res.status(500).send({ "message": "Error creating Profile" });
+											}
+										});
+									}
+									else {
+										res.status(500).send({ "message": "Error creating Password" });
+									}
+								});
+							}
+							else {
+								user.createAssociation(fk_user_id, google_uuid, function (err,result) {
+									if (!err) {
+										user.addOAuthUserProfile(fk_user_id, function (err, result) {
+											if (!err) {
+												res.status(201).send({ "Result": "Success!" });
+											}
+											else {
+												res.status(500).send({ "message": "Error creating Profile" });
+											}
+										});
+										res.status(201).send({ "Result": "Success!"});
+									}
+									else {
+										res.status(500).send({ "message": "Error creating Association" });
+									}
+								});
+							}
+						}
+						else {
+							res.status(500).send({ "message": "Error extracting User ID" });
+						}
+					});
+				}
 			}
 			else {
-				// this is matched to callback(null, not null)  
-				var msg = {
-					"token": token
-				};
-				res.status(200).send(msg);
+				res.status(500).send({ "message": "Error adding User" });
 			}
+		});
+	}
 
-		} else {
-			// this is matched to callaback(not null, null)
-			res.status(500).send({ "message": "Error authenticating user." });
+	var file = req.file;
+	if (file != null) {
+		mediaUpload(file, function (err, result) {
+			if (result) {
+				var profile_pic = result.media_url;
+				submitEdit(profile_pic);
+			}
+			else {
+				if (err.message == "File too big!" || err.message == "Invalid File Type") {
+					res.status(400).send({ "message": err.message });
+				}
+				else {
+					res.status(500).json({ "message": err.message });
+				}
+			}
+		});
+	}
+	else {
+		submitEdit(null);
+	}
+});
+
+//get profile info
+router.get("/profile", printDebugInfo, verify.extractUserId, function (req, res) {
+	let user_id = req.body.token_user_id;
+	user.getProfile(user_id, function (err, result) {
+		if (result == null) {
+			res.status(400).send({ "Error": "User not found." });
 		}
+		else if (result) {
+			res.status(200).send(result);
+		}
+		else {
+			res.status(500).send(err);
+		}
+	});
+});
 
+//edit user profile
+router.put("/profile", upload.single("file"), printDebugInfo, verify.extractUserId, function (req, res) {
+	var user_id = req.body.token_user_id;
+	var profile_pic = req.body.profile_pic;
+	var first_name = req.body.first_name;
+	var last_name = req.body.last_name;
+	var email = req.body.email;
+
+	var file = req.file;
+	console.log(file);
+	if (file != null) {
+		console.log("uploading file");
+		mediaUpload(file, function (err, result) {
+			if (result) {
+				let profile_pic_arr = result.media_url.split("upload");
+				let temp_profile_pic = profile_pic_arr[0] + "upload" + "/ar_1.0,c_fill/r_max" + profile_pic_arr[1];
+				profile_pic = temp_profile_pic;
+				submitEdit(profile_pic);
+			}
+			else {
+				res.status(500).json({ "Message": err.message });
+			}
+		});
+	}
+	else {
+		submitEdit(profile_pic);
+	}
+
+	function submitEdit(profile_pic) {
+
+		user.editProfile(user_id, profile_pic, first_name, last_name, email, function (err, result) {
+			if (!err) {
+				var output = {
+					"success": true,
+					"affected rows": result.affectedRows,
+					"changed rows": result.changedRows
+				};
+				res.status(200).send(output);
+			}
+			else {
+				res.status(500).send({ "Message": "Error editing user details." });
+			}
+		});
+	}
+});
+
+//edit password
+router.put("/password", printDebugInfo, verify.extractUserId, function (req, res) {
+	var user_id = req.body.token_user_id;
+	var new_password = req.body.new_password;
+	var old_password = req.body.old_password;
+
+
+	user.checkPassword(user_id, old_password, function (err, result) {
+		if (!err && result != null) {
+			var file = req.file;
+			console.log(file);
+			user.changePassword(user_id, new_password, function (err, result) {
+				if (result) {
+					res.status(200).send(result);
+				}
+				else {
+					res.status(500).send(err);
+				}
+			});
+		}
+		else {
+			if (err.message == "Wrong Password!") {
+				res.status(401).send({ "message": err.message });
+			}
+			console.log(err);
+			res.status(500).send({ "message": "Error checking password." });
+		}
 	});
 });
 

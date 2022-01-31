@@ -35,6 +35,7 @@ router.get("/posts/:post_id", printDebugInfo, (req, res) => {
 	});
 });
 
+// Get All Answers Made By User
 router.get("/user/:user_id", printDebugInfo, (req, res) => {
 	var user_id = req.params.user_id;
 
@@ -44,7 +45,11 @@ router.get("/user/:user_id", printDebugInfo, (req, res) => {
 			res.status(500).send(err);
 		}
 		else {
-			res.status(200).send(result);
+			if (result.length === 0) {
+				res.status(404).send("No Answers found");
+			} else {
+				res.status(200).send(result);
+			}
 		}
 	});
 });

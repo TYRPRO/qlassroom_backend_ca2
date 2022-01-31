@@ -1,6 +1,7 @@
+/* eslint-disable no-unused-vars */
 var sequelize = require("./sequelize/databaseModel");
 
-const { Post, Subforum, SavedPost, User, Grade, PostLabel, Label, Response, ResponseType } = sequelize.models;
+const { Post, Subforum, SavedPost, User, Grade, PostLabel, Label, Response, ResponseType, UserProfile } = sequelize.models;
 const { Op, where } = require("sequelize");
 
 var post = {
@@ -43,6 +44,9 @@ var post = {
 				model: User,
 				required: true,
 				attributes: ["first_name", "last_name"],
+				include: [{
+					model: UserProfile
+				}]
 			},
 			{
 				model: PostLabel,
@@ -218,7 +222,8 @@ var post = {
 						model: ResponseType,
 					}]
 				}
-			]
+			],
+			order: [["post_created_at", "DESC"]]
 
 			// add include once user and subforums are made
 		}).then(function (result) {
@@ -232,12 +237,19 @@ var post = {
 			where: { fk_user_id: user_id },
 			include: [
 				{
-					model: Post
+					model: Post,
+					include: [{
+						model: Response,
+						include: [{
+							model: ResponseType,
+						}]
+					}]
 				},
 				{
 					model: User
 				}
-			]
+			],
+			order: [[{ model: Post }, "post_created_at", "DESC"]]
 
 			// add include once user and subforums are made
 		}).then(function (result) {
@@ -519,7 +531,7 @@ var post = {
 			break;
 		}
 	},
-	setCorrectAnswer: function (post_id, answer_id, callback) {
+	setCorrectAnswer: function (post_id, answer_id, user_id, callback) {
 		Post.update(
 			{
 				post_is_answered: true,
@@ -528,7 +540,8 @@ var post = {
 			},
 			{
 				where: {
-					post_id: post_id
+					post_id: post_id,
+					fk_user_id: user_id
 				}
 
 				// add include once user and subforums are made

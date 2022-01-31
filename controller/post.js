@@ -108,7 +108,11 @@ router.get("/user/:user_id", printDebugInfo, (req, res) => {
 			console.log(err);
 		}
 		else {
-			res.status(200).send(result);
+			if (result.length === 0) {
+				res.status(404).send("Post not found");
+			} else {
+				res.status(200).send(result);
+			}
 		}
 	});
 
@@ -122,37 +126,52 @@ router.get("/save/user/:user_id", printDebugInfo, (req, res) => {
 		if (err) {
 			res.status(500).send(err);
 			console.log(err);
-		}
-		else {
-			res.status(200).send(result);
+		} else {
+			if (result.length === 0) {
+				res.status(404).send("Post not found");
+			} else {
+				res.status(200).send(result);
+			}
 		}
 	});
 });
 
-router.post("/save", printDebugInfo, (req, res) => {
+// Save Post Bookmark
+router.post("/save", printDebugInfo, verify.verifySameUserId, (req, res) => {
 	var user_id = req.body.user_id;
 	var post_id = req.body.post_id;
 
 	post.savePost(user_id, post_id, (err, result) => {
 		if (err) {
-			res.status(500).send(err);
-			console.log(err);
+			if (err.name === "SequelizeUniqueConstraintError") {
+				res.status(409).send("Post already Saved");
+			} else {
+				res.status(500).send(err);
+			}
 		} else {
-			res.status(200).send(result);
+			if (result.length === 0) {
+				res.status(404).send("Post not found");
+			} else {
+				res.status(201).send("Post saved");
+			}
 		}
 	});
 });
 
-router.delete("/remove", printDebugInfo, (req, res) => {
+// Remove Post Bookmark
+router.delete("/remove", printDebugInfo, verify.verifySameUserId, (req, res) => {
 	var user_id = req.body.user_id;
 	var post_id = req.body.post_id;
 
 	post.removeSavedPost(user_id, post_id, (err, result) => {
 		if (err) {
-			res.sendStatus(500).send(err);
-			console.log(err);
+			res.status(500).send(err);
 		} else {
-			res.sendStatus(202).send(result);
+			if (result === 0) {
+				res.status(404).send("Post not found");
+			} else {
+				res.status(204).send("Post removed");
+			}
 		}
 	});
 });
@@ -220,7 +239,7 @@ router.post("/filter/home", printDebugInfo, (req, res) => {
 // filter similar posts
 router.post("/filter/similar", printDebugInfo, (req, res) => {
 	var word = req.query.query;
-	
+
 	var subforum_id = req.body.subforum_id;
 	var grade_id = req.body.grade_id;
 	var isanswered = req.body.isanswered;
@@ -241,10 +260,14 @@ router.post("/filter/similar", printDebugInfo, (req, res) => {
 			if (word != "") {
 				var newarr = [];
 				for (var i = 0; i < result.length; i++) {
-					console.log(result[i].post_title);
-					if (calculateSimilarity(word, result[i].post_title) > 0.4) {
-						result[i].dataValues.similar = parseFloat(calculateSimilarity(word, result[i].post_title));
-						newarr.push(result[i]);
+					if (result[i].post_title.trim() == "") {
+						res.status(500).send("Database Error while Searching");
+					}
+					else {
+						if (calculateSimilarity(word, result[i].post_title) > 0.4) {
+							result[i].dataValues.similar = parseFloat(calculateSimilarity(word, result[i].post_title));
+							newarr.push(result[i]);
+						}
 					}
 				}
 				res.status(200).send(newarr);
@@ -257,11 +280,12 @@ router.post("/filter/similar", printDebugInfo, (req, res) => {
 });
 
 // Updates Post with a Accepted Answer
-router.put("/correctAnswer", printDebugInfo, (req, res) => {
+router.put("/correctAnswer", printDebugInfo, verify.extractUserId, (req, res) => {
 	var post_id = req.body.post_id;
 	var answer_id = req.body.answer_id;
+	var user_id = req.body.token_user_id;
 
-	post.setCorrectAnswer(post_id, answer_id, (err, result) => {
+	post.setCorrectAnswer(post_id, answer_id, user_id, (err, result) => {
 		if (err) {
 			res.status(500).send(err);
 			console.log(err);

@@ -59,6 +59,7 @@ router.get("/:post_id", printDebugInfo, (req, res) => {
 	});
 });
 
+// Get Number of Updates
 router.get("/user/:user_id", printDebugInfo, (req, res) => {
 	var user_id = req.params.user_id;
 
@@ -68,11 +69,16 @@ router.get("/user/:user_id", printDebugInfo, (req, res) => {
 			res.status(500).send(err);
 		}
 		else {
-			res.status(200).send(result);
+			if (result.length === 0) {
+				res.status(404).send("No Updates found");
+			} else {
+				res.status(200).send(result);
+			}
 		}
 	});
 });
 
+// Get Number of Accepted Answers
 router.get("/answersaccepted/:user_id", printDebugInfo, (req, res) => {
 	var user_id = req.params.user_id;
 
@@ -82,7 +88,11 @@ router.get("/answersaccepted/:user_id", printDebugInfo, (req, res) => {
 			res.status(500).send(err);
 		}
 		else {
-			res.status(200).send(result);
+			if (result.length === 0) {
+				res.status(404).send("No Accepted Answer found");
+			} else {
+				res.status(200).send(result);
+			}
 		}
 	});
 });

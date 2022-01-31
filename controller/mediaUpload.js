@@ -63,6 +63,22 @@ function typeOfContent(fileName) {
 		validFileType = true;
 		content_type = 1;
 		break;
+	case "mp4":
+		validFileType = true;
+		content_type = 2;
+		break;
+	case "mkv":
+		validFileType = true;
+		content_type = 2;
+		break;
+	case "webm":
+		validFileType = true;
+		content_type = 2;
+		break;
+	case "gif":
+		validFileType = true;
+		content_type = 3;
+		break;
 	}
 
 	return { validFileType: validFileType, content_type: content_type };

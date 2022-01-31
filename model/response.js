@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 var sequelize = require("./sequelize/databaseModel");
-const { Response, ResponseType, ResponseVote, Post, User } = sequelize.models;
+const { Response, ResponseType, ResponseVote, Post, User, UserProfile } = sequelize.models;
 
 var response = {
 	createResponse: function (response, parent_response_id, response_type, post_id, user_id, callback) {
@@ -58,6 +58,12 @@ var response = {
 			},
 			{
 				model: User,
+				include: [{
+					model: UserProfile
+				}]
+			},
+			{
+				model: Post
 			}]
 		}).then(function (result) {
 			// Formats the response votes.
@@ -67,7 +73,7 @@ var response = {
 				let response_votes = response.ResponseVotes;
 				let response_votes_count = 0;
 				for (let x = 0; x < response_votes.length; x++) {
-					if(response_votes[x].vote_type == true) {
+					if (response_votes[x].vote_type == true) {
 						response_votes_count += 1;
 					}
 					else {
@@ -76,7 +82,7 @@ var response = {
 				}
 
 				result[i].dataValues.response_votes_count = response_votes_count;
-				
+
 			}
 			console.log(result);
 

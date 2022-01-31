@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 console.log("---------------------------------");
 console.log(" ADES > CA1 > Qlassroom > controller > app.js");
 console.log("---------------------------------");
@@ -7,7 +8,7 @@ const config = require("../../config.js").key;
 const verify = {
 	verifySameUserId : function (req, res, next){
 		console.log(req.body);
-		var user_id = req.body.user_id || req.params.user_id || req.body.data.user_id;
+		var user_id = req.body.user_id || req.params.user_id || req.body.data.user_id || req.query.user_id;
 		console.log("user_id: " + user_id);
 
 		if (typeof req.headers.authorization !== "undefined") {
@@ -19,7 +20,7 @@ const verify = {
 				console.log(data);
 				if (err) {
 					console.log(err);
-					return res.status(403).send({ "message": "Unauthorized access", errCode: 1 });
+					return res.status(401).send({ "message": "Unauthorized access", errCode: 1 });
 				} else {
 					if (data.type == 2) {
 						req.body.fk_user_type_id = data.userData.user_id;
@@ -37,7 +38,7 @@ const verify = {
 				}
 			});
 		} else {
-			res.status(403).send({ "message": "Unauthorized access" });
+			res.status(401).send({ "message": "Unauthorized access" });
 		}
 	},
 
