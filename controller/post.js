@@ -109,7 +109,7 @@ router.get("/user/:user_id", printDebugInfo, (req, res) => {
 		}
 		else {
 			if (result.length === 0) {
-				res.status(404).send("Post not found");
+				res.status(200).send([]);
 			} else {
 				res.status(200).send(result);
 			}
@@ -128,7 +128,7 @@ router.get("/save/user/:user_id", printDebugInfo, (req, res) => {
 			console.log(err);
 		} else {
 			if (result.length === 0) {
-				res.status(404).send("Post not found");
+				res.status(200).send([]);
 			} else {
 				res.status(200).send(result);
 			}
