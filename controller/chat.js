@@ -3,7 +3,7 @@ const router = express.Router();
 const { Server } = require("socket.io");
 
 var port = "";
-port = 8001;
+port = process.env.PORT;
 
 const io = new Server(port, {
 	cors: {
