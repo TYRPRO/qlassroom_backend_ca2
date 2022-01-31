@@ -1,17 +1,20 @@
-const express = require("express");
-const router = express.Router();
-const { Server } = require("socket.io");
+// var express = require("express");
+// var { Server } = require("socket.io");
+// var router = express.Router();
+// var port = process.env.PORT || 8000;
+// var baseUrl;
+// if (process.env.PORT != null) {
+// 	baseUrl = "http://localhost:3000/";
+// }
+// else {
+// 	baseUrl = "https://qlassroomforum.herokuapp.com/:" + process.env.PORT;
+// }
 
-// var PORT = process.env.PORT;
-// var INDEX = "/home";
-
-// const server = express()
-// 	.use((req, res) => res.sendFile(INDEX, { root: __dirname }))
-// 	.listen(PORT, () => console.log(`Listening on ${PORT}`));
-
-// const io = new Server({ server });
-
-
+// const io = new Server(port, {
+// 	cors: {
+// 		origin: baseUrl
+// 	}
+// });
 
 // io.on("connection", (socket) => {
 // 	socket.on("join", (data) => {
@@ -32,4 +35,4 @@ const { Server } = require("socket.io");
 // });
 
 
-module.exports = router;
+// module.exports = router;
