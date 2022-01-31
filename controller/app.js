@@ -17,7 +17,7 @@ const subforum = require("./subforum");
 const label = require("./label");
 const vote = require("./vote");
 const report = require("./report");
-const chat = require("./chat");
+//const chat = require("./chat");
 
 //-----------------------------------
 // Middleware functions
@@ -56,7 +56,7 @@ app.use("/user", user);
 app.use("/responses", responses);
 app.use("/label", label);
 app.use("/vote", vote);
-app.use("/chat", chat);
+//app.use("/chat", chat);
 app.use("/report", report);
 
 //-----------------------------------
